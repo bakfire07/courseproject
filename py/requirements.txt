@@ -1,0 +1,4 @@
+selenium
+pandas
+textblob
+python -m textblob.download_corpora
