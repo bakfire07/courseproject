@@ -9,7 +9,8 @@ import os
 from selenium.webdriver.common.keys import Keys
 from selenium import webdriver
 import time
-
+import urllib
+import random
 # set the driver
 CHROMEDRIVER = "/Users/balamurali/Downloads/chromedriver"
 os.environ["webdriver.chrome.driver"] = CHROMEDRIVER
@@ -29,9 +30,10 @@ class TwitterCrawler():
         :return:
         """
         data_list = list()
-        fs = open(input_file,'r',encoding='utf8')
+        fs = open(input_file,'r')
         for line in fs:
-            data_list.append(line)
+            #data_list.append(urllib.quote_plus(line))
+            data_list.append(line.strip())
         fs.close()
         return data_list
 
@@ -47,18 +49,26 @@ class TwitterCrawler():
         fo = open(self.output_file,'w')
         driver = self.driver
         for search_item in self.data_list:
+            print 'Searching for term:{}'.format(search_item)
             driver.get(base_url + search_item)
             # get the body of the html
             body = driver.find_element_by_tag_name('body')
-            for _ in range(10):
+            for _ in range(2):
                 body.send_keys(Keys.PAGE_DOWN)
-                time.sleep(0.3)
+                # randomize the clicks so that twitter cannot understand it is a bot hitting
+                time.sleep(random.choice(range(4,8)))
 
             tweets = driver.find_elements_by_class_name('tweet-text')
             for tweet in tweets:
-                fo.write("{}:{}".format(search_item,tweet.text))
-
-        fo.write()
+                if len(tweet.text):
+                    try:
+                        fo.write("{}:#:{} \n".format(search_item,tweet.text.encode('UTF-8').replace('\n','. ')))
+                    except Exception as e:
+                        pass
+                # sleep before the next url is hit
+            time.sleep(random.choice(range(0,5)))
+            fo.flush()
+        fo.close()
         driver.close()
 
 
